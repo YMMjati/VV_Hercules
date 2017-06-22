@@ -1,0 +1,95 @@
+<!DOCTYPE HTML>
+<html>	
+	<head>
+		<title>Welkom bij Voetbalvereniging Hercules</title>
+		<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+		<link rel="stylesheet" type="text/css" href="style/style.css">
+		 <script src="scripts/logincheck_administrators.js"></script> 
+	</head>
+	<body>
+		<div class="container-fluid">
+			<div id="content" class="row">
+				<div class="col-md-2 headerbutton">&#9917; VV "Hercules"</div>
+				<div class="col-md-2 headerbutton altheaderbutton">&#128095; Wedstrijden</div>
+				<a href="admin_evenementen.html"><div class="col-md-2 headerbutton">&#127864; Evenementen</div></a>
+				<div id="logoutbutton" class="col-md-2 headerbutton">&#128682; Uitloggen</div>
+				<div class="col-md-12">
+					<div class="table-responsive">
+						<div class="tablecheckbox"><a href="admin_wedstrijd_aanmaken.html"><button id="addbutton">Wedstrijd aanmaken</button></a><input id="showyear" type="checkbox"> Toon alle wedstrijden van <span id="checkboxyear"></span></div>
+						<table class="table">
+							<thead>
+								<tr>
+									<th>Type</th>
+									<th>Starttijd</th>
+									<th>Eindtijd</th>
+									<th>Aanvaller</th>
+									<th>Verdediger</th>
+									<th>Eindstand</th>
+									<th>Toernooi</th>
+								</tr>
+							</thead>
+							<tbody id="wedstrijdenbody">
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<script type="text/javascript">
+			$("#logoutbutton").click(function(response){
+				localStorage.setItem("id", "");
+				localStorage.setItem("rol", "")
+				window.location.href = "index.html";
+			});
+			
+			function loadWedstrijden(){
+				var year = $("#showyear").is(":checked");
+				var period;
+
+				if(year == true){
+					period = "jaar";
+				}
+				else{
+					period = "recent";
+				}
+				
+				$.get("restservices/wedstrijden/getwedstrijden/"+ period +"/prive",
+				null, function(data) {
+					$("#wedstrijdenbody").empty();
+					
+					if(jQuery.isEmptyObject(data)){
+						$("#wedstrijdenbody").append("<tr><td>Niets gevonden</td><td></td><td></td><td></td><td></td><td></td><td></td></tr>");
+					}
+					else{
+						$.each(data, function(x, item){
+							$("#wedstrijdenbody").append('<tr><td>'+ item.type +'</td><td>'+ item.starttijd +'</td><td>'+ item.eindtijd +'</td><td>'+ item.aanvaller +'</td><td>'+ item.verdediger +'</td><td>'+ item.eindstand +'</td><td>'+ item.toernooi +'</td><td><button id="del'+ item.id +'">X</button></td></tr>');
+							$("#del"+ item.id).click(function(){deleteWedstrijd(item.id);})
+						});
+					}
+				});
+			}
+			
+			function deleteWedstrijd(id){
+				if(confirm("Weet je zeker dat je deze wedstrijd (#"+ id +") wilt verwijderen?") == true){
+					$.ajax("restservices/wedstrijden/verwijder/"+ id, { 
+						type: "delete", 
+							success: function(response) {
+								alert("De wedstrijd is verwijderd.");
+								loadWedstrijden();
+							},
+							error: function(response) {
+								alert("De wedstrijd kon niet worden verwijderd.");
+							}
+					}); 
+				}
+			}
+			
+			$("#checkboxyear").text(new Date().getFullYear());
+			$("#showyear").click(function(){loadWedstrijden();});
+			loadWedstrijden();
+		</script>
+	</body>
+</html>

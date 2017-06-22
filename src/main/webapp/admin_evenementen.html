@@ -1,0 +1,91 @@
+<!DOCTYPE HTML>
+<html>	
+	<head>
+		<title>Welkom bij Voetbalvereniging Hercules</title>
+		<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+		<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+		<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+		<link rel="stylesheet" type="text/css" href="style/style.css">
+		 <script src="scripts/logincheck_administrators.js"></script> 
+	</head>
+	<body>
+		<div class="container-fluid">
+			<div id="content" class="row">
+				<div class="col-md-2 headerbutton">&#9917; VV "Hercules"</div>
+				<a href="admin_wedstrijden.html"><div class="col-md-2 headerbutton">&#128095; Wedstrijden</div></a>
+				<div class="col-md-2 headerbutton altheaderbutton">&#127864; Evenementen</div>
+				<div id="logoutbutton" class="col-md-2 headerbutton">&#128682; Uitloggen</div>
+				<div class="col-md-12">
+					<div class="table-responsive">
+						<div class="tablecheckbox"><input id="showyear" type="checkbox"> Toon alle evenementen van <span id="checkboxyear"></span></div>
+						<table class="table">
+							<thead>
+								<tr>
+									<th>Naam</th>
+									<th>Starttijd</th>
+									<th>Eindtijd</th>
+								</tr>
+							</thead>
+							<tbody id="evenementenbody">
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</div>
+		</div>
+		
+		<script type="text/javascript">
+			$("#logoutbutton").click(function(response){
+				localStorage.setItem("id", "");
+				localStorage.setItem("rol", "")
+				window.location.href = "index.html";
+			});
+			
+			function loadEvenementen(){
+				var year = $("#showyear").is(":checked");
+				var period;
+
+				if(year == true){
+					period = "jaar";
+				}
+				else{
+					period = "recent";
+				}
+				
+				$.get("restservices/evenementen/getevenementen/"+ period +"/openbaar",
+				null, function(data) {
+					$("#evenementenbody").empty();
+					
+					if(jQuery.isEmptyObject(data)){
+						$("#evenementenbody").append("<tr><td>Niets gevonden</td><td></td><td></td></tr>");
+					}
+					else{
+						$.each(data, function(x, item){
+							$("#evenementenbody").append('<tr><td>'+ item.naam +'</td><td>'+ item.starttijd +'</td><td>'+ item.eindtijd +'</td><td><button id="del'+ item.id +'">X</button></td></tr>');
+							$("#del"+ item.id).click(function(){deleteEvenement(item.id);})
+						});
+					}
+				});
+			}
+			
+			function deleteEvenement(id){
+				if(confirm("Weet je zeker dat je dit evenement (#"+ id +") wilt verwijderen?") == true){
+					$.ajax("restservices/evenementen/verwijder/"+ id, { 
+						type: "delete", 
+							success: function(response) {
+								alert("Het evenement is verwijderd.");
+								loadEvenementen();
+							},
+							error: function(response) {
+								alert("Het evenement kon niet worden verwijderd.");
+							}
+					}); 
+				}
+			}
+
+			$("#checkboxyear").text(new Date().getFullYear());
+			$("#showyear").click(function(){loadEvenementen();});
+			loadEvenementen();
+		</script>
+	</body>
+</html>
